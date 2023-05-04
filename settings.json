@@ -1,0 +1,7 @@
+{
+    "name": "ddos-detector",
+    "rest": false,
+    "cli": false,
+    "data-pickup-period": 3,
+    "weights_file": "weights"
+}
