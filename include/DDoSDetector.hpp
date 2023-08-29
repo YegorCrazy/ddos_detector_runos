@@ -8,9 +8,12 @@
 #include "api/SwitchFwd.hpp"
 #include "oxm/openflow_basic.hh"
 
+#include "../../host-manager/include/HostManager.hpp"
+
 #include <fstream>
 #include <unordered_map>
 #include <array>
+#include <atomic>
 
 #include <boost/thread/thread.hpp>
 
@@ -20,6 +23,8 @@ using SwitchPtr = safe::shared_ptr<Switch>;
 namespace of13 = fluid_msg::of13;
 
 const inline int FEATURES_NUM = 4;
+const inline unsigned long long PORT_NUMBER_MASK = 0x00000000FFFF0000ULL;
+const inline unsigned long long DPID_MASK = 0x000000000000FFFFULL;
 
 class DDoSDetector : public Application
 {
@@ -38,6 +43,7 @@ private:
     std::shared_ptr<FlowRemovedHandler> handler_;
     SwitchManager* switch_manager_;
     OFServer* of_server_;
+    HostManager* host_manager_;
 	
     boost::chrono::seconds data_pickup_period_;
     boost::thread detection_thread_;
@@ -47,8 +53,11 @@ private:
     std::array<double, FEATURES_NUM> coefs_;
     double intercept_;
     
-    std::unordered_map<uint64_t, long long> packets_in_removed_flow_;
-    long long flows_removed = 0;
+    std::unordered_map<uint64_t, std::atomic_llong> packets_in_removed_flow_; // flow cookie to packets number
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, std::atomic_llong>> flows_removed; // dpid and port number to removed flows num
+    
+    bool show_debug_ = false;
+    bool enabled_;
 };
 
 } // namespace runos
